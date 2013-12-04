@@ -1,0 +1,4 @@
+linux-fix-paths.patch -p1
+linux_prep-fix-cmdlines.patch -p1
+add-command-script-for-barebox.patch -p1
+0002-add-dwams-board.patch -p1

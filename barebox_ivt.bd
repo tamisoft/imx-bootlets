@@ -1,0 +1,34 @@
+// STMP378x ROM command script to load and run barebox
+
+sources {
+	power_prep="imx-bootlets-power_prep-imx233-dwams";
+	sdram_prep="imx-bootlets-boot_prep-imx233-dwams";
+	barebox="barebox-imx233-dwams.bin";
+}
+
+section (0) {
+
+	//----------------------------------------------------------
+	// Power Supply initialization
+	//----------------------------------------------------------
+
+	load power_prep;
+	load ivt (entry = power_prep:_start) > 0x8000;
+	hab call 0x8000;
+
+	//----------------------------------------------------------
+	// SDRAM initialization
+	//----------------------------------------------------------
+
+	load sdram_prep;
+	load ivt (entry = sdram_prep:_start) > 0x8000;
+	hab call 0x8000;
+	//----------------------------------------------------------
+	//  Load and call barebox - ELF ARM image
+	//----------------------------------------------------------
+
+	load barebox;
+	load ivt (entry = barebox:start) > 0x8000;
+	hab call 0x8000;
+
+}

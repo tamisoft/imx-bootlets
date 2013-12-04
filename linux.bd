@@ -1,0 +1,38 @@
+// STMP378x ROM command script to load and run Linux kernel
+options {
+	driveTag = 0x00;
+	flags = 0x01;
+}
+sources {
+	power_prep="imx-bootlets-power_prep-imx233-dwams";
+	sdram_prep="imx-bootlets-boot_prep-imx233-dwams";
+	linux_prep="imx-bootlets-linux_prep-imx233-dwams";
+	zImage="zImage-imx233-dwams.bin";
+}
+
+section (0) {
+
+	//----------------------------------------------------------
+	// Power Supply initialization
+	//----------------------------------------------------------
+	load power_prep;
+	call power_prep;
+
+	//----------------------------------------------------------
+	// SDRAM initialization
+	//----------------------------------------------------------
+	load sdram_prep;
+	call sdram_prep;
+
+	//----------------------------------------------------------
+	// Prepare to boot Linux
+	//----------------------------------------------------------
+	load linux_prep;
+	call linux_prep;
+
+	//----------------------------------------------------------
+	//  Load ans start Linux kernel
+	//----------------------------------------------------------
+	load zImage > 0x40008000;
+	jump linux_prep;
+}
