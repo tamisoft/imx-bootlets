@@ -11,15 +11,15 @@ CMDLINESDIR	= $(SRCDIR)/cmdlines
 
 # Linker script
 BASE_ADDR	?= 0x00002000
-BOOT_LAYOUT_IN	= $(SRCDIR)/linux_prep.ld.in
-BOOT_LAYOUT_OUT	= $(OUTPUTDIR)/linux_prep.ld
+BOOT_LAYOUT_IN	= $(SRCDIR)/otp_prep.ld.in
+BOOT_LAYOUT_OUT	= $(OUTPUTDIR)/otp_prep.ld
 
 
 # Output ELF image
-LINUX_PREP	= $(OUTPUTDIR)/linux_prep
+OTP_PREP	= $(OUTPUTDIR)/otp_prep
 
 # Output binary image
-LINUX_PREP_ROM	= $(OUTPUTDIR)/linux_prep.rom
+OTP_PREP_ROM	= $(OUTPUTDIR)/otp_prep.rom
 
 CROSS_COMPILE ?= arm-linux-gnueabi-
 
@@ -42,7 +42,7 @@ BOARD_OBJS = $(BOARD).o
 
 # Sources for various HW modules. Define each module separately
 # to make it possible to select different modules for different
-# boards. Tha main purpose to handle some HW pieces in linux_prep
+# boards. Tha main purpose to handle some HW pieces in otp_prep
 # is to receive magic keys from them.
 #
 # Note that the source files are located under hw/ directory.
@@ -56,31 +56,17 @@ CMDLINES_STRIP	= $(OUTPUTDIR)/command_lines_stripped.txt
 # The board defines STMP CPU family and peripherial components
 # So, set ARCH and HW_OBJS variables for each supported board
 # separately.
-ifeq ($(BOARD), stmp37xx_dev)
-ARCH = 37xx
-HW_OBJS = $(LRADC_OBJS)
-CFLAGS += -DSTMP37XX -DBOARD_STMP37XX_DEV
-endif
-ifeq ($(BOARD), stmp378x_dev)
-ARCH = mx23
-HW_OBJS = $(LRADC_OBJS)
-CFLAGS += -DSTMP378X -DBOARD_STMP378X_DEV
-endif
-ifeq ($(BOARD), iMX28_EVK)
-ARCH = mx28
-HW_OBJS = $(LRADC_OBJS)
-CFLAGS += -DMX28 -DBOARD_MX28_EVK
-endif
+
 ifeq ($(BOARD), imx23_dwams_dev)
 ARCH = mx23
-HW_OBJS = $(LRADC_OBJS) $(OTP_OBJS)
+HW_OBJS = $(OTP_OBJS)
 CFLAGS += -DIMX23_DWAMS -DBOARD_IMX23_DWAMS
 endif
 
 # Generic code
-CORE_OBJS = entry.o resume.o cmdlines.o setup.o keys.o
+CORE_OBJS = entry.o resume.o
 
-LINUX_PREP_OBJS = $(addprefix $(COREDIR)/, $(CORE_OBJS)) \
+OTP_PREP_OBJS = $(addprefix $(COREDIR)/, $(CORE_OBJS)) \
 		  $(addprefix $(BOARDDIR)/, $(BOARD_OBJS)) \
 		  $(addprefix $(HWDIR)/, $(HW_OBJS))
 
@@ -89,8 +75,8 @@ LINUX_PREP_OBJS = $(addprefix $(COREDIR)/, $(CORE_OBJS)) \
 all: build
 
 #
-# Pass a preprocessed command line file build it into linux_prep
-# image. Also rebuild a linux_prep if command line has been changed
+# Pass a preprocessed command line file build it into otp_prep
+# image. Also rebuild a otp_prep if command line has been changed
 # since last build
 #
 $(COREDIR)/cmdlines.o: CFLAGS += -DCMDLINES_FILE=\"$(CMDLINES_STRIP)\"
@@ -111,7 +97,7 @@ $(COREDIR)/cmdlines.o: $(CMDLINES_STRIP)
 #
 .PHONY: build build_prep clean
 
-build: build_prep $(CMDLINES_STRIP) $(LINUX_PREP_ROM)
+build: build_prep $(CMDLINES_STRIP) $(OTP_PREP_ROM)
 
 build_prep:
 	@(if [ -z $(ARCH) ] ; \
@@ -126,23 +112,23 @@ build_prep:
 clean:
 	@echo Cleaning...
 	@echo Files:
-	rm -rf $(LINUX_PREP_OBJS) $(BOOT_LAYOUT_OUT)
+	rm -rf $(OTP_PREP_OBJS) $(BOOT_LAYOUT_OUT)
 	@echo Build output:
 	rm -rf $(OUTPUTDIR)
 	@echo Build system:
 	rm -rf $(INCLUDEDIR)/arch
 
 #
-# Rules to build linux_prep image
+# Rules to build otp_prep image
 #
 $(CMDLINES_STRIP): $(CMDLINES)
 	$(call strip_cmdlines_file)
 
-$(LINUX_PREP_ROM): $(LINUX_PREP)
+$(OTP_PREP_ROM): $(OTP_PREP)
 	$(OBJCOPY) -R -S -O binary $< $@
 
-$(LINUX_PREP): $(LINUX_PREP_OBJS) $(BOOT_LAYOUT_OUT)
-	$(LD) -o $@ $(LINUX_PREP_OBJS) $(LDFLAGS)
+$(OTP_PREP): $(OTP_PREP_OBJS) $(BOOT_LAYOUT_OUT)
+	$(LD) -o $@ $(OTP_PREP_OBJS) $(LDFLAGS)
 	@nm -n $@ > $@.map
 
 $(BOOT_LAYOUT_OUT): $(BOOT_LAYOUT_IN)
@@ -151,7 +137,7 @@ $(BOOT_LAYOUT_OUT): $(BOOT_LAYOUT_IN)
 #
 # Preprocess a command lines file
 # Preprocess a command lines file
-# linux_prep is not the best place to handle text files so it expets
+# otp_prep is not the best place to handle text files so it expets
 # that all command lines will be stored one by separated by '\0'
 # characters. So, the initial command lines file created by user should
 # be preprocessed to remove leading and trailing and extra whitespaces,

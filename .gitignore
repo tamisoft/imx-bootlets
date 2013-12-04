@@ -5,6 +5,8 @@ initramfs.cpio.gz
 /linux_prep/include/arch
 /linux_prep/output-target
 /power_prep/power_prep
+/otp_prep/output-target
+/otp_prep/include/arch
 *.sb
 *.map
 zImage

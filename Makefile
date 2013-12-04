@@ -27,7 +27,7 @@ all: build_prep gen_bootstream
 build_prep:
 
 
-gen_bootstream: linux_prep boot_prep power_prep linux.bd uboot.bd linux.bd uboot.bd updater.bd
+gen_bootstream: linux_prep boot_prep power_prep otp_prep linux.bd uboot.bd linux.bd uboot.bd updater.bd
 	@echo "generating linux kernel boot stream image"
 ifeq "$(DFT_IMAGE)" "$(wildcard $(DFT_IMAGE))"
 	@echo "by using the rootfs/boot/zImage"
@@ -77,6 +77,7 @@ updater: linux_prep boot_prep power_prep
 	@echo "Build updater firmware"
 	elftosb -z -c ./updater.bd -o updater.sb
 	elftosb -z -f imx28 -c ./updater_ivt.bd -o updater_ivt.sb
+
 linux_prep:
 ifneq "$(CMDLINE1)" ""
 	@echo "by using environment command line"
@@ -89,12 +90,22 @@ endif
 	$(MAKE) clean -C linux_prep
 	@echo "cross-compiling linux_prep"
 	$(MAKE) -C linux_prep ARCH=$(ARCH) BOARD=$(BOARD)
+
+otp_prep:
+	# force building otp_prep
+	$(MAKE) clean -C otp_prep
+	@echo "cross-compiling otp_prep"
+	$(MAKE) -C otp_prep ARCH=$(ARCH) BOARD=$(BOARD)
+
+
 install:
 	cp -f boot_prep/boot_prep  ${DESTDIR}
 
 	cp -f power_prep/power_prep  ${DESTDIR}
 
 	cp -f linux_prep/output-target/linux_prep ${DESTDIR}
+
+	cp -f otp_prep/output-target/otp_prep ${DESTDIR}
 
 	cp -f *.sb ${DESTDIR}
 #	to create finial mfg updater.sb
@@ -109,6 +120,7 @@ clean:
 	$(MAKE) -C linux_prep clean ARCH=$(ARCH)
 	$(MAKE) -C boot_prep clean ARCH=$(ARCH)
 	$(MAKE) -C power_prep clean ARCH=$(ARCH)
+	$(MAKE) -C otp_prep clean ARCH=$(ARCH)
 
-.PHONY: all build_prep linux_prep boot_prep power_prep distclean clean
+.PHONY: all build_prep linux_prep boot_prep power_prep otp_prep distclean clean
 

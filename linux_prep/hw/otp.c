@@ -1,3 +1,7 @@
+#include <otp.h>
+#include <init.h>
+#include "debug.h"
+#include "regsuartdbg.h"
 
 #define HW_CLKCTRL_CPU_WR(x) ((*((int *)0x80040020))=x)
 #define HW_CLKCTRL_CPU_RD() ((*((int *)0x80040020)))
@@ -81,6 +85,21 @@
 #define HW_DIGCTL_MICROSECONDS_RD() ((*((int *)0x8001C0C0)))
 
 
+void putc(char ch)
+{
+        int loop = 0;
+        while (HW_UARTDBGFR_RD()&BM_UARTDBGFR_TXFF) {
+                loop++;
+                if (loop > 10000)
+                        break;
+        };
+
+        /* if(!(HW_UARTDBGFR_RD() &BM_UARTDBGFR_TXFF)) */
+        HW_UARTDBGDR_WR(ch);
+}
+
+
+
 int otp_write(int address, int data) {
     int previous_vddio, start_us;
 
@@ -156,3 +175,24 @@ int otp_close_read() {
     return 0;
 }
 
+static void otp_blow_sd_boot()
+{
+    if (!(HW_OCOTP_ROM0_RD() & (0x08)))
+       {
+            printf("Shadow register shows SD_BOOT_MMC off, trying to blow it: 0x");
+            printf("%x",otp_write(0x18,0x08));
+            printf("\n");
+       }else{
+            printf("Shadow register shows SD_BOOT_MMC is blown, all OK.\n");
+       }
+}
+
+static void otp_init (void)
+{
+  printf("** Navicron OTP setup *** \n");
+  otp_blow_sd_boot();
+}
+
+#ifdef BOARD_IMX23_DWAMS
+hw_initcall(otp_init);
+#endif
