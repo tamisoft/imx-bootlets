@@ -1,0 +1,36 @@
+// STMP378x ROM command script to load and run Linux kernel
+options {
+	driveTag = 0x00;
+	flags = 0x01;
+}
+sources {
+	power_prep="otp-power_prep";
+	sdram_prep="otp-boot_prep";
+	otp_prep="otp-otp_prep";
+	fake_prep="otp-otp_prep";
+}
+
+section (0) {
+
+	//----------------------------------------------------------
+	// Power Supply initialization
+	//----------------------------------------------------------
+	load power_prep;
+	call power_prep;
+
+	//----------------------------------------------------------
+	// SDRAM initialization
+	//----------------------------------------------------------
+	load sdram_prep;
+	call sdram_prep;
+
+	//----------------------------------------------------------
+	// Prepare to boot Linux
+	//----------------------------------------------------------
+	load otp_prep;
+	call otp_prep;
+
+	load fake_prep;
+	call fake_prep;
+
+}
